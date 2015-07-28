@@ -79,7 +79,12 @@ public class BundleScanner {
                 ManifestElement[]  manifestElements = ManifestElement.parseHeader("Export-Package", packages);
                 for(ManifestElement me:manifestElements) {
                     //System.out.println(me.getValue());
-                    exportedPackageHolder.addBundle(me.getValue(), bundle);
+                    String version = me.getAttribute("version");
+                    if(version == null || version.isEmpty()) {
+                        version = "0.0.0";
+                    }
+                    String packageId = me.getValue()+" ["+version+"]";
+                    exportedPackageHolder.addBundle(packageId, bundle);
                 }
             } catch (BundleException e) {
                 e.printStackTrace();

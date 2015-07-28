@@ -19,10 +19,11 @@
 package org.wso2.test.ruwan.osgi;
 
 import java.io.File;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class StartScan {
+
+    private String carbonHome;
 
     public static void main(String[] args) {
         String carbonHome = System.getenv("CARBON_HOME");
@@ -36,6 +37,12 @@ public class StartScan {
             }
         }
 
+        StartScan startScan = new StartScan();
+        startScan.dosScan(carbonHome);
+    }
+
+    private void dosScan(String carbonHome) {
+        this.carbonHome = carbonHome;
         File root = new File(carbonHome);
         BundleScanner bundleScanner = new BundleScanner();
         if (root.isDirectory() && root.isDirectory()) {
@@ -48,13 +55,72 @@ public class StartScan {
         }
     }
 
-    private static void printMap(Map<String, List<Bundle>> duplicates) {
+    private void printMap(Map<String, List<Bundle>> duplicates) {
+        System.out.println(
+                "*** WARNING ****\n" + "The following packages are exported by duplicate bundles.\n"
+                        + "Those may cause class loader errors such as NoClassDefFound.\n"
+                        + "Please remove the unwanted bundles");
+
+        printPackagesAggregate(duplicates);
+    }
+
+    private void printOnePerPackage(Map<String, List<Bundle>> duplicates) {
+        int i = 1;
         for (String key : duplicates.keySet()) {
-            System.out.println("Package " + key);
+            System.out.println("["+i+"]\nPackages " + key);
+            System.out.println(" Exported by multiple bundles");
             for (Bundle b : duplicates.get(key)) {
-                System.out.println("    " + b.getBundleName());
+                String location = b.getBundleFile().getPath();
+                location = location.replace(carbonHome, "");
+                System.out.println("    " + b.getBundleName() +" at the location "+location);
+            }
+            i++;
+        }
+    }
+
+    private void printPackagesAggregate(Map<String, List<Bundle>> duplicates) {
+        int i = 1;
+        Collection<PackageBundles> bundles = coalatePackages(duplicates);
+        for (PackageBundles packageBundles : bundles) {
+            System.out.println("[" + i + "]\nPackages ");
+            for (String p : packageBundles.packages) {
+                System.out.println("    " + p);
+            }
+            System.out.println("  Exported By");
+            for (Bundle b : packageBundles.bundles) {
+                String location = b.getBundleFile().getPath();
+                location = location.replace(carbonHome, "");
+                System.out.println("    " + b.getBundleName() + " at the location " + location);
             }
         }
     }
 
+    private Collection<PackageBundles> coalatePackages(Map<String, List<Bundle>> duplicates) {
+
+        Map<String, PackageBundles> bundlesMap = new HashMap<>();
+        for (String key : duplicates.keySet()) {
+            String bundleCoallateKey = "";
+            for (Bundle b : duplicates.get(key)) {
+                bundleCoallateKey += b.getBundleName();
+            }
+            PackageBundles packageBundles = bundlesMap.get(bundleCoallateKey);
+            if (packageBundles == null) {
+                packageBundles = new PackageBundles();
+                bundlesMap.put(bundleCoallateKey, packageBundles);
+            }
+            for (Bundle b : duplicates.get(key)) {
+                packageBundles.bundles.add(b);
+            }
+            packageBundles.packages.add(key);
+        }
+
+        return bundlesMap.values();
+    }
+
+    private class PackageBundles {
+
+        private Set<String> packages = new HashSet<>();
+        private Set<Bundle> bundles = new HashSet<>();
+        ;
+    }
 }
