@@ -28,11 +28,15 @@ import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.logging.Logger;
 
 public class BundleScanner {
 
     private ExportedPackageHolder exportedPackageHolder = new ExportedPackageHolder();
+    private boolean matchPackageVersions = false;
+
+    public BundleScanner(boolean matchPackageVersions) {
+        this.matchPackageVersions = matchPackageVersions;
+    }
 
     public void scanDirectory(File root) {
         File repo = new File(root, "repository");
@@ -47,12 +51,12 @@ public class BundleScanner {
             }
         });
 
-        for (int i=0; i< jarNames.length; i++) {
+        for (int i = 0; i < jarNames.length; i++) {
             scanJar(plugins, jarNames[i]);
         }
     }
 
-    private  void scanJar(File dir, String jarName) {
+    private void scanJar(File dir, String jarName) {
         //System.out.println("Jar "+jarName);
         File jarFile = new File(dir, jarName);
         try {
@@ -60,10 +64,11 @@ public class BundleScanner {
             java.util.jar.Manifest manifest = jar.getManifest();
 
             Bundle bundle = new Bundle(jarName, jarFile, manifest);
-            for (Object key : manifest.getMainAttributes().keySet())  {
+            for (Object key : manifest.getMainAttributes().keySet()) {
                 Attributes.Name name = (Attributes.Name) key;
-                if(name.toString().equals("Export-Package")) {
-                    scanPackageExports(jar, bundle, manifest, manifest.getMainAttributes().get(key));
+                if (name.toString().equals("Export-Package")) {
+                    scanPackageExports(jar, bundle, manifest,
+                            manifest.getMainAttributes().get(key));
                 }
             }
         } catch (IOException e) {
@@ -73,17 +78,21 @@ public class BundleScanner {
 
     private void scanPackageExports(JarFile jar, Bundle bundle, Manifest manifest, Object o) {
         //System.out.println("Exp Str "+o);
-        if(o != null) {
+        if (o != null) {
             String packages = String.valueOf(o);
             try {
-                ManifestElement[]  manifestElements = ManifestElement.parseHeader("Export-Package", packages);
-                for(ManifestElement me:manifestElements) {
+                ManifestElement[] manifestElements = ManifestElement
+                        .parseHeader("Export-Package", packages);
+                for (ManifestElement me : manifestElements) {
                     //System.out.println(me.getValue());
                     String version = me.getAttribute("version");
-                    if(version == null || version.isEmpty()) {
+                    if (version == null || version.isEmpty()) {
                         version = "0.0.0";
                     }
-                    String packageId = me.getValue()+" ["+version+"]";
+                    String packageId = me.getValue();
+                    if (matchPackageVersions) {
+                        packageId = packageId + " [" + version + "]";
+                    }
                     exportedPackageHolder.addBundle(packageId, bundle);
                 }
             } catch (BundleException e) {
@@ -95,9 +104,9 @@ public class BundleScanner {
     public Map<String, List<Bundle>> getDuplicateExports() {
         Map<String, List<Bundle>> result = new HashMap<>();
 
-        for(String key: exportedPackageHolder.getPackageToBundleMap().keySet()) {
+        for (String key : exportedPackageHolder.getPackageToBundleMap().keySet()) {
             Set<Bundle> bundleList = exportedPackageHolder.getPackageToBundleMap().get(key);
-            if(bundleList != null && bundleList.size() >1) {
+            if (bundleList != null && bundleList.size() > 1) {
                 result.put(key, new ArrayList<Bundle>(bundleList));
             }
         }

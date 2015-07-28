@@ -18,33 +18,44 @@
 
 package org.wso2.test.ruwan.osgi;
 
+import org.apache.commons.cli.*;
+
 import java.io.File;
 import java.util.*;
 
 public class StartScan {
 
+    private static final String CMD_OPTION_CARBON_HOME = "d";
+    private static final String CMD_OPTION_PACKAGE_VERSIONS = "pv";
+
     private String carbonHome;
 
     public static void main(String[] args) {
-        String carbonHome = System.getenv("CARBON_HOME");
-        if (carbonHome == null) {
-            if (args.length <= 0) {
-                System.out.println(
-                        "Either CARBON_HOME environment needs to be set or provide the carbon home as an argument");
-                return;
-            } else {
-                carbonHome = args[0];
-            }
-        }
-
         StartScan startScan = new StartScan();
-        startScan.dosScan(carbonHome);
+        startScan.dosScan(args);
     }
 
-    private void dosScan(String carbonHome) {
-        this.carbonHome = carbonHome;
+    private void dosScan(String[] args) {
+        carbonHome = System.getenv("CARBON_HOME");
+        boolean matchPackageVersions  = false;
+
+        CommandLineParser parser = new BasicParser();
+        try {
+            CommandLine cmd = parser.parse(getOptions(), args);
+            if (cmd.hasOption("d")) {
+                carbonHome = cmd.getOptionValue(CMD_OPTION_CARBON_HOME);
+            }
+            matchPackageVersions = cmd.hasOption(CMD_OPTION_PACKAGE_VERSIONS);
+        } catch (ParseException e) {
+            System.out.println(e.getLocalizedMessage());
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp( "scan", getOptions() );
+            return;
+        }
+
+
         File root = new File(carbonHome);
-        BundleScanner bundleScanner = new BundleScanner();
+        BundleScanner bundleScanner = new BundleScanner(matchPackageVersions);
         if (root.isDirectory() && root.isDirectory()) {
             bundleScanner.scanDirectory(root);
             Map<String, List<Bundle>> duplicates = bundleScanner.getDuplicateExports();
@@ -117,10 +128,21 @@ public class StartScan {
         return bundlesMap.values();
     }
 
+    private Options getOptions() {
+        Options options = new Options();
+        options.addOption(CMD_OPTION_PACKAGE_VERSIONS, false, "Check Package Versions");
+        Option directory = OptionBuilder.withArgName("carbon_home")
+                .hasArg()
+                .withDescription("Carbon Home" )
+                .create(CMD_OPTION_CARBON_HOME);
+        options.addOption(directory);
+
+        return options;
+    }
+
     private class PackageBundles {
 
         private Set<String> packages = new HashSet<>();
         private Set<Bundle> bundles = new HashSet<>();
-        ;
     }
 }
