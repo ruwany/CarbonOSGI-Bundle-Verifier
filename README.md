@@ -5,10 +5,15 @@ Building
 ========
 
 mvn install
+mvn package appassembler:assemble
 
 
 Running
 =======
 
+Either set your environment variable CARBON_HOME to correct unzipped directory or provide it
+as a program argument
 
-java org.wso2.test.ruwan.osgi.StartScan <carbon_home>
+e.g.
+sh target/appassembler/bin/scan <carbon_home>
+
