@@ -19,37 +19,42 @@
 package org.wso2.test.ruwan.osgi;
 
 import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.List;
+import java.util.Map;
 
 public class StartScan {
 
     public static void main(String[] args) {
         String carbonHome = System.getenv("CARBON_HOME");
-        if (carbonHome == null ) {
-          if(args.length <= 0) {
-              System.out.println(
-                      "Either CARBON_HOME environment needs to be set or provide the carbon home as an argument");
-              return;
-          } else {
-              carbonHome = args[0];
-          }
+        if (carbonHome == null) {
+            if (args.length <= 0) {
+                System.out.println(
+                        "Either CARBON_HOME environment needs to be set or provide the carbon home as an argument");
+                return;
+            } else {
+                carbonHome = args[0];
+            }
         }
 
         File root = new File(carbonHome);
         BundleScanner bundleScanner = new BundleScanner();
         if (root.isDirectory() && root.isDirectory()) {
             bundleScanner.scanDirectory(root);
+            Map<String, List<Bundle>> duplicates = bundleScanner.getDuplicateExports();
+            printMap(duplicates);
         } else {
             System.out.println(
                     "The given location does not point to a valid directory " + carbonHome);
         }
     }
 
+    private static void printMap(Map<String, List<Bundle>> duplicates) {
+        for (String key : duplicates.keySet()) {
+            System.out.println("Package " + key);
+            for (Bundle b : duplicates.get(key)) {
+                System.out.println("    " + b.getBundleName());
+            }
+        }
+    }
 
 }

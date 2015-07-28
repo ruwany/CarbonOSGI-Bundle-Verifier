@@ -18,19 +18,21 @@
 
 package org.wso2.test.ruwan.osgi;
 
+import org.eclipse.osgi.util.ManifestElement;
+import org.osgi.framework.BundleException;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.logging.Logger;
 
 public class BundleScanner {
 
     private ExportedPackageHolder exportedPackageHolder = new ExportedPackageHolder();
-
 
     public void scanDirectory(File root) {
         File repo = new File(root, "repository");
@@ -51,13 +53,13 @@ public class BundleScanner {
     }
 
     private  void scanJar(File dir, String jarName) {
-        System.out.println("Jar "+jarName);
+        //System.out.println("Jar "+jarName);
         File jarFile = new File(dir, jarName);
         try {
             java.util.jar.JarFile jar = new java.util.jar.JarFile(jarFile);
             java.util.jar.Manifest manifest = jar.getManifest();
 
-            Bundle bundle = new Bundle();
+            Bundle bundle = new Bundle(jarName, jarFile, manifest);
             for (Object key : manifest.getMainAttributes().keySet())  {
                 Attributes.Name name = (Attributes.Name) key;
                 if(name.toString().equals("Export-Package")) {
@@ -70,87 +72,31 @@ public class BundleScanner {
     }
 
     private void scanPackageExports(JarFile jar, Bundle bundle, Manifest manifest, Object o) {
-        System.out.println("Exp Str "+o);
+        //System.out.println("Exp Str "+o);
         if(o != null) {
             String packages = String.valueOf(o);
-            Set<String> packagesSet = new HashSet<>();
-            collectPackages(packagesSet, packages, 0);
-            for (String p: packagesSet) {
-                System.out.println("Exported "+p);
-            }
-//            packages = packages.replaceAll("\"(.*)\"", "");
-//            System.out.println("Exp2 Str " + packages);
-//            String[] packagesArray = packages.split(",");
-//            for (String pkgEntry: packagesArray) {
-//                String exportedPackageName = getPackageName(pkgEntry);
-//                System.out.println("Exported "+exportedPackageName);
-//                exportedPackageHolder.addBundle(exportedPackageName, bundle);
-//            }
-        }
-    }
-
-    private String getPackageName(String pkgEntry) {
-        if (pkgEntry == null) {
-            return null;
-        }
-        int firstSemicolonIndex = pkgEntry.indexOf(";");
-        if(firstSemicolonIndex > 0) {
-            return pkgEntry.substring(0, firstSemicolonIndex);
-        }
-
-        return pkgEntry;
-    }
-
-    private void collectPackages(Set<String> packagesCollected, String scan, int index) {
-        if(index >= scan.length()) {
-            return;
-        }
-
-        char c = scan.charAt(index);
-        StringBuilder sb = new StringBuilder();
-        while(notDelimiter(c) ) {
-            sb.append(c);
-            index ++;
-            if (index >= scan.length() ) {
-                break;
-            }
-            c = scan.charAt(index);
-        }
-        if(sb.length() >0) {
-            packagesCollected.add(sb.toString());
-        }
-
-        //Now skip until we find another comma
-
-        int quotesFound = 0;
-        do {
-            index++;
-            if (index < scan.length()) {
-                c = scan.charAt(index);
-                if(isQuote(c)) {
-                    quotesFound ++;
+            try {
+                ManifestElement[]  manifestElements = ManifestElement.parseHeader("Export-Package", packages);
+                for(ManifestElement me:manifestElements) {
+                    //System.out.println(me.getValue());
+                    exportedPackageHolder.addBundle(me.getValue(), bundle);
                 }
+            } catch (BundleException e) {
+                e.printStackTrace();
             }
-        } while (notDelimiter(c) && (quotesFound % 2 == 1) && (index < scan.length()));
-
-        if(scan.length() > index) {
-            collectPackages(packagesCollected, scan, index);
         }
     }
 
-    private boolean isQuote(char c) {
-        switch (c) {
-            case '"' :return true;
-        }
-        return false;
-    }
+    public Map<String, List<Bundle>> getDuplicateExports() {
+        Map<String, List<Bundle>> result = new HashMap<>();
 
-    private boolean notDelimiter(char c) {
-        switch (c) {
-            case ',':
-        case ';':
-                return false;
+        for(String key: exportedPackageHolder.getPackageToBundleMap().keySet()) {
+            Set<Bundle> bundleList = exportedPackageHolder.getPackageToBundleMap().get(key);
+            if(bundleList != null && bundleList.size() >1) {
+                result.put(key, new ArrayList<Bundle>(bundleList));
+            }
         }
-        return true;
+
+        return result;
     }
 }

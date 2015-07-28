@@ -18,6 +18,30 @@
 
 package org.wso2.test.ruwan.osgi;
 
+import java.io.File;
+import java.util.jar.Manifest;
+
 public class Bundle {
 
+    private String bundleName;
+    private File bundleFile;
+    private Manifest manifest;
+
+    public Bundle(String bundleName, File bundleFile, Manifest manifest) {
+        this.bundleName = bundleName;
+        this.bundleFile = bundleFile;
+        this.manifest = manifest;
+    }
+
+    public String getBundleName() {
+        return bundleName;
+    }
+
+    public File getBundleFile() {
+        return bundleFile;
+    }
+
+    public Manifest getManifest() {
+        return manifest;
+    }
 }

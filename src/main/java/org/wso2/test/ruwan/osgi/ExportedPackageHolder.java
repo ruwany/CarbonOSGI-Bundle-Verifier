@@ -18,7 +18,10 @@
 
 package org.wso2.test.ruwan.osgi;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class ExportedPackageHolder {
 
@@ -26,10 +29,14 @@ public class ExportedPackageHolder {
 
     public void addBundle(String packageName, Bundle bundle) {
         Set<Bundle> currentSet = packageToBundleMap.get(packageName);
-        if(currentSet == null) {
+        if (currentSet == null) {
             currentSet = new HashSet<>();
             packageToBundleMap.put(packageName, currentSet);
         }
         currentSet.add(bundle);
+    }
+
+    /*package private*/ Map<String, Set<Bundle>> getPackageToBundleMap() {
+        return packageToBundleMap;
     }
 }
