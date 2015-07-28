@@ -37,7 +37,7 @@ public class StartScan {
 
     private void dosScan(String[] args) {
         carbonHome = System.getenv("CARBON_HOME");
-        boolean matchPackageVersions  = false;
+        boolean matchPackageVersions = false;
 
         CommandLineParser parser = new BasicParser();
         try {
@@ -49,10 +49,17 @@ public class StartScan {
         } catch (ParseException e) {
             System.out.println(e.getLocalizedMessage());
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp( "scan", getOptions() );
+            formatter.printHelp("scan", getOptions());
             return;
         }
 
+        if (carbonHome == null) {
+            System.out.println(
+                    "Either CARBON_HOME environment variable needs to be set or needs to be provided as a command line argument");
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("scan", getOptions());
+            return;
+        }
 
         File root = new File(carbonHome);
         BundleScanner bundleScanner = new BundleScanner(matchPackageVersions);
@@ -78,12 +85,12 @@ public class StartScan {
     private void printOnePerPackage(Map<String, List<Bundle>> duplicates) {
         int i = 1;
         for (String key : duplicates.keySet()) {
-            System.out.println("["+i+"]\nPackages " + key);
+            System.out.println("[" + i + "]\nPackages " + key);
             System.out.println(" Exported by multiple bundles");
             for (Bundle b : duplicates.get(key)) {
                 String location = b.getBundleFile().getPath();
                 location = location.replace(carbonHome, "");
-                System.out.println("    " + b.getBundleName() +" at the location "+location);
+                System.out.println("    " + b.getBundleName() + " at the location " + location);
             }
             i++;
         }
@@ -131,10 +138,8 @@ public class StartScan {
     private Options getOptions() {
         Options options = new Options();
         options.addOption(CMD_OPTION_PACKAGE_VERSIONS, false, "Check Package Versions");
-        Option directory = OptionBuilder.withArgName("carbon_home")
-                .hasArg()
-                .withDescription("Carbon Home" )
-                .create(CMD_OPTION_CARBON_HOME);
+        Option directory = OptionBuilder.withArgName("carbon_home").hasArg()
+                .withDescription("Carbon Home").create(CMD_OPTION_CARBON_HOME);
         options.addOption(directory);
 
         return options;
