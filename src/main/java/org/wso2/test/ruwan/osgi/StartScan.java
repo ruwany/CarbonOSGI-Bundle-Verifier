@@ -110,6 +110,7 @@ public class StartScan {
                 location = location.replace(carbonHome, "");
                 System.out.println("    " + b.getBundleName() + " at the location " + location);
             }
+            i++;
         }
     }
 
