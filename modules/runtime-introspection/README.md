@@ -6,7 +6,7 @@ This module generates a custom OSGI classes which is used to print out Class Loa
 User can set the offending class as a java VM argument (-D arg) and start the OSGI environment.
 The modified classes will print the reason of the class loading error due to bundle conflict.
 
-**Note** Please make sure you do this on offline pack an the tool modifies the CARBON_HOME. The modifications are difficult to revert.
+**Note** Please make sure you do this on offline pack, as this tool modifies the CARBON_HOME. The modifications are difficult to revert.
 
 Build
 =====
@@ -24,7 +24,7 @@ This will modify the existing CARBON_HOME so that it will print the class loadin
 Run
 ===
 
-Go to your <CARBON_HOME>, start the server with usual wso2server.sh. Add java option "-Dwso2.osgi.class.loader.intro.name=\<fully qualified class name\>"
+Go to your \<CARBON_HOME\>, start the server with usual wso2server.sh. Add java option "-Dwso2.osgi.class.loader.intro.name=\<fully qualified class name\>"
 
 
    ./wso2server.sh -Dwso2.osgi.class.loader.intro.name=org.wso2.carbon.appmgt.impl.AppRepository
