@@ -32,5 +32,5 @@ Go to your \<CARBON_HOME\>, start the server with usual wso2server.sh. Add java 
 
 This will print Error like the following
 
-    [ERROR] Loading Class [AAA] failed. There is a conflict in package: reference:file:../plugins/BBB.jar Exporting BBB1:VVV
-    reference:file:../plugins/CCC.jar Exporting CCC1:VVV
+    [ERROR] Loading Class [org.wso2.carbon.appmgt.impl.AppRepository] failed. There is a conflict in package: reference:file:../plugins/wadl-core_1.1.3.wso2v2.jar Exporting com.sun.xml.bind:1.1.3.wso2v2
+    reference:file:../plugins/jaxb_2.2.5.wso2v1.jar Exporting com.sun.xml.bind:1.1.3.wso2v2
