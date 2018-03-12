@@ -39,7 +39,7 @@ public class BundleScanner {
     }
 
     public void scanDirectory(File root) {
-        File repo = new File(root, "repository");
+        File repo = new File(root, "wso2");
         File components = new File(repo, "components");
         File plugins = new File(components, "plugins");
 
